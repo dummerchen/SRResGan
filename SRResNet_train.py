@@ -2,6 +2,8 @@
 # @Author : Dummerfu
 # @Contact : https://github.com/dummerchen 
 # @Time : 2022/5/2 14:40
+import time
+
 import torch
 from torch.utils import tensorboard
 import os
@@ -15,7 +17,7 @@ from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 def main(opts):
     start_epoch=0
-    device='cpu' if not torch.cuda.is_available() else 'cuda'
+    device='cpu' if not torch.cuda.is_available() else 'cuda:0'
     print('using device:{}'.format(device))
     if not os.path.exists(opts.logs_dir):
         os.mkdir(opts.logs_dir)
@@ -23,7 +25,7 @@ def main(opts):
         print('data not found！！！')
         return
 
-    writer=tensorboard.SummaryWriter(log_dir=opts.logs_dir)
+    writer=tensorboard.SummaryWriter(log_dir=os.path.join(opts.logs_dir,time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(time.time()))))
     if opts.workers==None:
         workers=min([os.cpu_count(), opts.batchsize if opts.batchsize > 1 else 0, 8])
     else:
@@ -34,10 +36,10 @@ def main(opts):
     train_dataloader=DataLoader(train_data,shuffle=True,batch_size=opts.batchsize,num_workers=workers)
     val_dataloader=DataLoader(val_data,shuffle=False,batch_size=1,num_workers=workers)
 
-    model=SRResNet(in_channels=3,n_block=5,scale_factor=4,hidden_channels=64)
+    model=SRResNet(in_channels=3,n_block=16,scale_factor=4,hidden_channels=64)
 
     loss_func=torch.nn.MSELoss()
-    optimizer=torch.optim.Adam(lr=opts.learning_rate,params=model.parameters())
+    optimizer=torch.optim.Adam(lr=opts.learning_rate,params=model.parameters(),betas=(0.006,0))
 
     if  opts.weights!=None and os.path.exists(opts.weights):
         # 加载模型
@@ -114,7 +116,7 @@ def main(opts):
 if __name__ == '__main__':
     args=argparse.ArgumentParser()
     args.add_argument('--data_path_root','-dpr',default='../datasets/bsds500',type=str)
-    args.add_argument('--batchsize','-bs',default=2,type=int)
+    args.add_argument('--batchsize','-bs',default=4,type=int)
     args.add_argument('--weights','-w',default=None,type=str)
     args.add_argument('--logs_dir','-ld',default='./logs',type=str)
     args.add_argument('--scale_factor','-sf',default=4,type=int)
