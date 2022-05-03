@@ -35,9 +35,10 @@ class BSD_DataSets(Dataset):
         # h,w,c bgr
         image=cv2.imread(self.image_paths[item])
         image=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+        # c,h,w
         hr=self.transforms[self.train_or_val](image)
 
-        c,w,h=hr.shape
+        c,h,w=hr.shape
         lr=transforms.Resize(size=[h//self.scale_factor,w//self.scale_factor])(hr)
         hr=transforms.CenterCrop(size=(h//self.scale_factor*self.scale_factor,w//self.scale_factor*self.scale_factor))(hr)
         return lr,hr

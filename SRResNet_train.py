@@ -90,14 +90,14 @@ def main(opts):
 
                     val_mean_psnr +=psnr
                     val_mean_ssim +=ssim
-
-                    writer.add_images('SRResNet/epoch_' + str(epoch) + '_1',
-                                     lr, epoch)
-                    writer.add_images('SRResNet/epoch_' + str(epoch) + '_2',
-                                     res, epoch)
-                    writer.add_images('SRResNet/epoch_' + str(epoch) + '_3',
-                                     hr, epoch)
                     val_bar.set_description(desc='Epoch [{}/{}] Loss:{} PSNR:{} SSIM:{}'.format(epoch,opts.epoch,loss.item(),psnr,ssim))
+                    # 每次只输出最后一组的验证结果
+                    writer.add_images('SRResNet/epoch_' + str(epoch) + '_lr',
+                                      lr, epoch)
+                    writer.add_images('SRResNet/epoch_' + str(epoch) + '_res',
+                                      res, epoch)
+                    writer.add_images('SRResNet/epoch_' + str(epoch) + '_hr',
+                                      hr, epoch)
                 val_mean_loss/=len(val_bar)
                 val_mean_psnr/=len(val_bar)
                 val_mean_ssim/=len(val_bar)
@@ -116,7 +116,7 @@ def main(opts):
 if __name__ == '__main__':
     args=argparse.ArgumentParser()
     args.add_argument('--data_path_root','-dpr',default='../datasets/bsds500',type=str)
-    args.add_argument('--batchsize','-bs',default=4,type=int)
+    args.add_argument('--batchsize','-bs',default=2,type=int)
     args.add_argument('--weights','-w',default=None,type=str)
     args.add_argument('--logs_dir','-ld',default='./logs',type=str)
     args.add_argument('--scale_factor','-sf',default=4,type=int)
