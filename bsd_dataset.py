@@ -21,6 +21,7 @@ class BSD_DataSets(Dataset):
                 transforms.Compose([
                 transforms.ToPILImage(),
                 transforms.RandomCrop(size=96),
+                transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 ]),
             'val':transforms.Compose([

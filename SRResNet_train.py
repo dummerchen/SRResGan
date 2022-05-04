@@ -26,11 +26,15 @@ def main(opts):
         return
     cudnn.benchmark=True
     torch.manual_seed(opts.seed)
-    writer=tensorboard.SummaryWriter(log_dir=os.path.join(opts.logs_dir,time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(time.time()))))
+
+    writer=tensorboard.SummaryWriter(log_dir=os.path.join(opts.logs_dir,'Res_'+time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(time.time()))))
+
     if opts.workers==None:
         workers=min([os.cpu_count(), opts.batchsize if opts.batchsize > 1 else 0, 8])
     else:
         workers=opts.workers
+    print('use workers:{}'.format(workers))
+
     train_data=BSD_DataSets(opts.data_path_root,'train')
     val_data=BSD_DataSets(opts.data_path_root,'val')
 
@@ -40,13 +44,16 @@ def main(opts):
     model=SRResNet(in_channels=3,n_block=16,scale_factor=4,hidden_channels=64)
     model.to(device)
     # True 为batchsize的平均值，False的话为总合
-    loss_func=torch.nn.MSELoss()
-    optimizer=torch.optim.Adam(lr=opts.learning_rate,params=model.parameters(),betas=(0.006,0))
-    lr_schedule=torch.optim.lr_scheduler.StepLR(optimizer,step_size=200,gamma=0.1)
+    # if you set size_average = True, then the loss would become very small,
+    # and when you use the loss for gradient calculation,
+    # the gradient will also be very small.No good for the convergence speed.
+    loss_func=torch.nn.MSELoss(size_average=False)
+    optimizer=torch.optim.Adam(lr=opts.learning_rate,params=model.parameters(),betas=(0.9,0))
+    lr_schedule=torch.optim.lr_scheduler.StepLR(optimizer,step_size=60,gamma=0.3)
     if  opts.weights!=None and os.path.exists(opts.weights):
         # 加载模型
         params=torch.load(opts.weights,map_location=device)
-        optimizer.load_state_dict(params['optimzer'])
+        optimizer.load_state_dict(params['optimizer'])
         model.load_state_dict(params['weights'])
         start_epoch=params['epoch']
         try:
@@ -77,7 +84,7 @@ def main(opts):
         train_mean_psnr=train_mean_psnr/len(train_bar)
         writer.add_scalar('train_loss',train_mean_loss,epoch)
         writer.add_scalar('train_psnr',train_mean_psnr,epoch)
-
+        print('\n train_loss:{} train_psnr:{}\n'.format(train_mean_loss,train_mean_psnr))
         if epoch%opts.save_epoch==0:
             model.eval()
             val_bar=tqdm(val_dataloader)
@@ -110,6 +117,7 @@ def main(opts):
                 writer.add_scalar('val_mean_loss',val_mean_loss,epoch)
                 writer.add_scalar('val_mean_psnr',val_mean_psnr,epoch)
                 writer.add_scalar('val_mean_ssim',val_mean_ssim,epoch)
+                print('\n val_mean_loss:{} val_psnr:{} val_ssim:{}\n'.format(val_mean_loss, val_mean_psnr,val_mean_ssim))
             d={
                 'weights':model.state_dict(),
                 'epoch':epoch,
@@ -124,7 +132,7 @@ if __name__ == '__main__':
     args.add_argument('--data_path_root','-dpr',default='../datasets/bsds500',type=str)
     args.add_argument('--batchsize','-bs',default=2,type=int)
     args.add_argument('--seed',default=1314,type=int)
-    args.add_argument('--weights','-w',default='./weights/SRRessNet_95.pth',type=str)
+    args.add_argument('--weights','-w',default=None,type=str)
     args.add_argument('--logs_dir','-ld',default='./logs',type=str)
     args.add_argument('--scale_factor','-sf',default=4,type=int)
     args.add_argument('--learning_rate','-lr',default=0.0001,type=float)
