@@ -27,7 +27,7 @@ class BSD_DataSets(Dataset):
         image=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
         # c,h,w
         if self.train_or_val=='val':
-            c, h, w = image.shape
+            h, w,c = image.shape
             self.hscale = h // self.scale_factor
             self.wscale = w // self.scale_factor
         else:
