@@ -23,10 +23,12 @@ class BSD_DataSets(Dataset):
                 transforms.RandomCrop(size=96),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
-                ]),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]),
             'val':transforms.Compose([
                 transforms.ToPILImage(),
                 transforms.ToTensor(),
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ])
         }
 
@@ -42,6 +44,7 @@ class BSD_DataSets(Dataset):
         c,h,w=hr.shape
         lr=transforms.Resize(size=[h//self.scale_factor,w//self.scale_factor])(hr)
         hr=transforms.CenterCrop(size=(h//self.scale_factor*self.scale_factor,w//self.scale_factor*self.scale_factor))(hr)
+
         return lr,hr
 
 

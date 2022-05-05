@@ -11,7 +11,7 @@ class SRResNet(nn.Module):
         super(SRResNet, self).__init__()
         self.num_blocks=n_block
         self.conv1=nn.Conv2d(in_channels,hidden_channels,kernel_size=(9,9),stride=(1,1),padding=4)
-        self.ac1=nn.PReLU(num_parameters=1,init=0.2)
+        self.ac1=nn.PReLU(num_parameters=1,init=0.25)
         self.blocks=nn.Sequential(*[Block(in_channels=hidden_channels,hidden=hidden_channels) for i in range(self.num_blocks)])
 
         self.conv2=nn.Conv2d(hidden_channels,hidden_channels,kernel_size=3,stride=1,padding=1)
@@ -43,7 +43,7 @@ class Block(nn.Module):
         super(Block, self).__init__()
         self.conv1=nn.Conv2d(in_channels,hidden,kernel_size=kernal_size,stride=stride,padding=1)
         self.bn1=nn.BatchNorm2d(hidden)
-        self.ac1=nn.PReLU(num_parameters=1,init=0.2)
+        self.ac1=nn.PReLU(num_parameters=1,init=0.25)
         self.conv2=nn.Conv2d(hidden,hidden,kernal_size,stride,padding=1)
         self.bn2=nn.BatchNorm2d(hidden)
 
@@ -61,7 +61,7 @@ class SubPixelShuffleConvBlock(nn.Module):
         super(SubPixelShuffleConvBlock, self).__init__()
         self.conv1=nn.Conv2d(in_channels,hidden,kernel_size,stride,padding=1)
         self.ps=nn.PixelShuffle(2)
-        self.ac=nn.PReLU(num_parameters=1,init=0.2)
+        self.ac=nn.PReLU(num_parameters=1,init=0.25)
     def forward(self,x):
         out1=self.conv1(x) # B,256,w,h
         out2=self.ps(out1) # B,64,w*2,h*2

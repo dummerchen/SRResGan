@@ -47,8 +47,9 @@ def main(opts):
     # if you set size_average = True, then the loss would become very small,
     # and when you use the loss for gradient calculation,
     # the gradient will also be very small.No good for the convergence speed.
-    loss_func=torch.nn.MSELoss(size_average=False)
-    optimizer=torch.optim.Adam(lr=opts.learning_rate,params=model.parameters(),betas=(0.9,0))
+
+    loss_func=torch.nn.MSELoss()
+    optimizer=torch.optim.Adam(lr=opts.learning_rate,params=model.parameters(),betas=(0.9,0.99))
     lr_schedule=torch.optim.lr_scheduler.StepLR(optimizer,step_size=60,gamma=0.3)
     if  opts.weights!=None and os.path.exists(opts.weights):
         # 加载模型
@@ -118,13 +119,13 @@ def main(opts):
                 writer.add_scalar('val_mean_psnr',val_mean_psnr,epoch)
                 writer.add_scalar('val_mean_ssim',val_mean_ssim,epoch)
                 print('\n val_mean_loss:{} val_psnr:{} val_ssim:{}\n'.format(val_mean_loss, val_mean_psnr,val_mean_ssim))
-            d={
+            state_dict={
                 'weights':model.state_dict(),
                 'epoch':epoch,
                 'optimizer':optimizer.state_dict(),
                 'schedule':lr_schedule.state_dict()
                }
-            torch.save(d,'./weights/SRResNet_{}.pth'.format(epoch))
+            torch.save(state_dict,'./weights/SRResNet_{}.pth'.format(epoch))
     writer.close()
 
 if __name__ == '__main__':
