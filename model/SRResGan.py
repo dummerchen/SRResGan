@@ -3,6 +3,7 @@
 # @Contact : https://github.com/dummerchen 
 # @Time : 2022/5/4 11:30
 import torch
+import torchvision
 from torch import nn
 class Discriminator(nn.Module):
     def __init__(self,in_channels):
@@ -48,6 +49,58 @@ class Block(nn.Module):
             out=self.bn(out1)
         out=self.ac(out1)
         return out
+
+
+class TruncatedVGG19(nn.Module):
+    """
+    truncated VGG19网络，用于计算VGG特征空间的MSE损失
+    """
+
+    def __init__(self, i, j):
+        """
+        :参数 i: 第 i 个池化层
+        :参数 j: 第 j 个卷积层
+        """
+        super(TruncatedVGG19, self).__init__()
+
+        # 加载预训练的VGG模型
+        vgg19 = torchvision.models.vgg19(
+            pretrained=True)  # C:\Users\Administrator/.cache\torch\checkpoints\vgg19-dcbb9e9d.pth
+
+        maxpool_counter = 0
+        conv_counter = 0
+        truncate_at = 0
+        # 迭代搜索
+        for layer in vgg19.features.children():
+            truncate_at += 1
+
+            # 统计
+            if isinstance(layer, nn.Conv2d):
+                conv_counter += 1
+            if isinstance(layer, nn.MaxPool2d):
+                maxpool_counter += 1
+                conv_counter = 0
+
+            # 截断位置在第(i-1)个池化层之后（第 i 个池化层之前）的第 j 个卷积层
+            if maxpool_counter == i - 1 and conv_counter == j:
+                break
+
+        # 检查是否满足条件
+        assert maxpool_counter == i - 1 and conv_counter == j, "当前 i=%d 、 j=%d 不满足 VGG19 模型结构" % (
+            i, j)
+
+        # 截取网络
+        self.truncated_vgg19 = nn.Sequential(*list(vgg19.features.children())[:truncate_at + 1])
+
+    def forward(self, input):
+        """
+        前向传播
+        参数 input: 高清原始图或超分重建图，张量表示，大小为 (N, 3, w * scaling factor, h * scaling factor)
+        返回: VGG19特征图，张量表示，大小为 (N, feature_map_channels, feature_map_w, feature_map_h)
+        """
+        output = self.truncated_vgg19(input)  # (N, feature_map_channels, feature_map_w, feature_map_h)
+
+        return output
 
 if __name__ == '__main__':
     input=torch.randn((4,3,96,96))

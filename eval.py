@@ -24,8 +24,9 @@ if __name__ == '__main__':
     device='cpu'
 
     # 19.79 0.752
-    weights_path='./weights/SRResNet_500_n.pth'
-    # weights_path='./weights/checkpoint_srresnet.pth'
+    # weights_path='./weights/SRResNet_30.pth'
+    # weights_path='./weights/SRGan_50.pth'
+    weights_path= 'weights/checkpoint_srresnet_21.pth'
     # c,h,w
     transform = {
         'train':
@@ -56,10 +57,10 @@ if __name__ == '__main__':
         res = model(lr)
         res=res.squeeze().numpy().transpose(1,2,0)
         lr=lr.squeeze().numpy().transpose(1,2,0)
-        # res=(res+1.)/2.
+        res=(res+1.)/2.
         # cv2.imshow('lr',lr)
         # cv2.imshow('res',res)
-        cv2.imwrite('./results/lr.png',cv2.cvtColor(lr*255,cv2.COLOR_RGB2BGR))
-        cv2.imwrite('./results/res.png',cv2.cvtColor(res*255,cv2.COLOR_RGB2BGR))
+        cv2.imwrite('./results/gan_lr.png',cv2.cvtColor(lr*255,cv2.COLOR_RGB2BGR))
+        cv2.imwrite('./results/gan_res.png',cv2.cvtColor(res*255,cv2.COLOR_RGB2BGR))
         cv2.waitKey()
         cv2.destroyAllWindows()
