@@ -7,9 +7,9 @@
 
 ## SRGan
 将SRRes_train.ipynb的倒数第二行改为运行最后一行
-结果如下：分别是插值，gan，和训练的40个epoch的res生成的图片
-![image_lb](https://github.com/dummerchen/SRResGan/blob/master/results/lr_b.png)
-![image_gan](https://github.com/dummerchen/SRResGan/blob/master/results/res_0.png)
-![image_res](https://github.com/dummerchen/SRResGan/blob/master/results/res_1.png)
+结果如下：分别是插值，训练60epoch 的 gan，和训练的40个epoch的res生成的图片
+![image_lb](https://github.com/dummerchen/SRResGan/results/lr_b.png)
+![image_gan](https://github.com/dummerchen/SRResGan/results/res_0.png)
+![image_res](https://github.com/dummerchen/SRResGan/results/res_1.png)
 
 可以发现gan的颜色虽然有点不对但是细节比SRResNet生成的更好~~仔细看水的波纹和桥的钢缆~~
