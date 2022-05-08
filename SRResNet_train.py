@@ -10,7 +10,7 @@ import os
 import argparse
 from tqdm import tqdm
 from model.SRResNet import SRResNet
-from bsd_dataset import BSD_DataSets
+from bsd_dataset import BSD_DataSets,collate
 from torch.utils.data import DataLoader
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 import torch.backends.cudnn as cudnn
@@ -38,8 +38,8 @@ def main(opts):
     train_data=BSD_DataSets(opts.data_path_root,'train')
     val_data=BSD_DataSets(opts.data_path_root,'val')
 
-    train_dataloader=DataLoader(train_data,shuffle=True,batch_size=opts.batchsize,num_workers=workers,pin_memory=True)
-    val_dataloader=DataLoader(val_data,shuffle=False,batch_size=1,num_workers=workers,pin_memory=True)
+    train_dataloader=DataLoader(train_data,shuffle=True,batch_size=opts.batchsize,num_workers=workers,pin_memory=True,collate_fn=collate)
+    val_dataloader=DataLoader(val_data,shuffle=False,batch_size=1,num_workers=workers,pin_memory=True,collate_fn=collate)
 
     model=SRResNet(in_channels=3,n_block=16,scale_factor=4,hidden_channels=64)
     model.to(device)

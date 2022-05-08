@@ -11,7 +11,7 @@ import argparse
 from tqdm import tqdm
 from model.SRResNet import SRResNet as G
 from model.SRResGan import TruncatedVGG19,Discriminator as D
-from bsd_dataset import BSD_DataSets
+from bsd_dataset import BSD_DataSets,collate
 from torch.utils.data import DataLoader
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 import torch.backends.cudnn as cudnn
@@ -39,8 +39,8 @@ def main(opts):
     train_data=BSD_DataSets(opts.data_path_root,'train')
     val_data=BSD_DataSets(opts.data_path_root,'val')
 
-    train_dataloader=DataLoader(train_data,shuffle=True,batch_size=opts.batchsize,num_workers=workers)
-    val_dataloader=DataLoader(val_data,shuffle=False,batch_size=1,num_workers=workers)
+    train_dataloader=DataLoader(train_data,shuffle=True,batch_size=opts.batchsize,num_workers=workers,pin_memory=True,collate_fn=collate)
+    val_dataloader=DataLoader(val_data,shuffle=False,batch_size=1,num_workers=workers,pin_memory=True,collate_fn=collate)
 
     g=G(in_channels=3,n_block=16,scale_factor=4,hidden_channels=64)
     g.to(device)
@@ -48,6 +48,7 @@ def main(opts):
     d.to(device)
 
     truncated_vgg19 = TruncatedVGG19(i=5, j=4)
+    truncated_vgg19.to(device)
     truncated_vgg19.eval()
 
     mse_loss_func=torch.nn.MSELoss()
@@ -71,11 +72,11 @@ def main(opts):
             pass
     if opts.dweights != None and os.path.exists(opts.dweights):
         params = torch.load(opts.dweights, map_location=device)
-        d_optimizer.load_state_dict(params['d_optimizer'])
-        d.load_state_dict(params['d_weights'])
-        d_lr_schedule.load_state_dict(params['d_schedule'])
+        d_optimizer.load_state_dict(params['optimizer'])
+        d.load_state_dict(params['weights'])
+        d_lr_schedule.load_state_dict(params['schedule'])
         try:
-            d_lr_schedule.load_state_dict(params['d_schedule'])
+            d_lr_schedule.load_state_dict(params['schedule'])
         except:
             pass
 
@@ -89,7 +90,7 @@ def main(opts):
         for lr,hr in train_bar:
         # ----- Generator -------
 
-            lr,hr=lr.to(device),hr.to(device)
+            lr,hr=lr.to(device,non_block=True),hr.to(device)
             res=g(lr)
             vgg_hr=truncated_vgg19(hr)
             vgg_res=truncated_vgg19(res)
@@ -164,7 +165,7 @@ def main(opts):
                 writer.add_scalar('val_mean_psnr',val_mean_psnr,epoch)
                 writer.add_scalar('val_mean_ssim',val_mean_ssim,epoch)
                 print('\n val_mean_loss:{} val_psnr:{} val_ssim:{}\n'.format(val_mean_loss, val_mean_psnr,val_mean_ssim))
-            state_dict={
+            g_state_dict={
                 'weights':g.state_dict(),
                 'd_weights':d.state_dict(),
                 'epoch':epoch,
@@ -173,7 +174,14 @@ def main(opts):
                 'schedule':g_lr_schedule.state_dict(),
                 'd_schedule':d_lr_schedule.state_dict(),
                }
-            torch.save(state_dict,'./weights/SRGan_{}.pth'.format(epoch))
+            d_state_dict = {
+                'weights': d.state_dict(),
+                'epoch': epoch,
+                'optimizer': d_optimizer.state_dict(),
+                'schedule': d_lr_schedule.state_dict(),
+            }
+            torch.save(g_state_dict,'./weights/SRGan_g_{}.pth'.format(epoch))
+            torch.save(d_state_dict,'./weights/SRGan_d_{}.pth'.format(epoch))
     writer.close()
 
 if __name__ == '__main__':
@@ -181,8 +189,8 @@ if __name__ == '__main__':
     args.add_argument('--data_path_root','-dpr',default='../datasets/bsds500',type=str)
     args.add_argument('--batchsize','-bs',default=1,type=int)
     args.add_argument('--seed',default=1314,type=int)
-    args.add_argument('--gweights','-gw',default='./weights/SRResNet_40.pth',type=str)
-    args.add_argument('--dweights','-dw',default=None,type=str)
+    args.add_argument('--gweights','-gw',default='./weights/SRGan_g_51.pth',type=str)
+    args.add_argument('--dweights','-dw',default='./weights/SRGan_d_51',type=str)
     args.add_argument('--logs_dir','-ld',default='./logs',type=str)
     args.add_argument('--scale_factor','-sf',default=4,type=int)
     args.add_argument('--learning_rate','-lr',default=0.0001,type=float)

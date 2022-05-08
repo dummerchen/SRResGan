@@ -9,11 +9,18 @@ from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 import os
 from model.SRResNet import SRResNet
 from model.models import SRResNet as sr
+from PIL import Image
+import matplotlib as mpl
+from matplotlib import pyplot as plt
+
+mpl.rcParams['font.sans-serif'] = 'SimHei'
+mpl.rcParams['axes.unicode_minus'] = False
 
 if __name__ == '__main__':
     scale_factor=4
-    path='../datasets/bsds500/val/2018.jpg'
+    path='../datasets/bsds500/val/48025.jpg'
     image = cv2.imread(path)
+    cv2.imwrite('./results/lr.png',image)
     h,w,c=image.shape
     if not os.path.exists('./results'):
         os.mkdir('./results')
@@ -25,14 +32,13 @@ if __name__ == '__main__':
 
     # 19.79 0.752
     # weights_path='./weights/SRResNet_30.pth'
-    # weights_path='./weights/SRGan_50.pth'
-    weights_path= 'weights/checkpoint_srresnet_21.pth'
+    weights_path=['./weights/SRGan_g_66.pth','./weights/SRResNet_40.pth']
+    # weights_path= 'weights/checkpoint_srresnet_21.pth'
     # c,h,w
     transform = {
-        'train':
+        'lr':
             transforms.Compose([
                 transforms.ToPILImage(),
-                transforms.RandomCrop(size=96),
                 transforms.ToTensor(),
             ]),
         'val': transforms.Compose([
@@ -45,22 +51,17 @@ if __name__ == '__main__':
     lr = transform['val'](image)
     lr= lr.to(device)
     lr=torch.unsqueeze(lr,dim=0)
-    model = SRResNet(in_channels=3, n_block=16, scale_factor=4, hidden_channels=64)
-    # model = sr()
-    # 用网上这个人的https://github.com/luoming1994/SRResNet训练的效果还没我的好 锐化太严重
-    params = torch.load(weights_path, map_location=device)
-    # model.load_state_dict(params['model'])
-    model.load_state_dict(params['weights'])
-    model.to(device)
-    model.eval()
-    with torch.no_grad():
-        res = model(lr)
-        res=res.squeeze().numpy().transpose(1,2,0)
-        lr=lr.squeeze().numpy().transpose(1,2,0)
-        res=(res+1.)/2.
-        # cv2.imshow('lr',lr)
-        # cv2.imshow('res',res)
-        cv2.imwrite('./results/gan_lr.png',cv2.cvtColor(lr*255,cv2.COLOR_RGB2BGR))
-        cv2.imwrite('./results/gan_res.png',cv2.cvtColor(res*255,cv2.COLOR_RGB2BGR))
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+
+    for i,weight in enumerate(weights_path):
+        model = SRResNet(in_channels=3, n_block=16, scale_factor=4, hidden_channels=64)
+        model.to(device)
+        # 用网上这个人的https://github.com/luoming1994/SRResNet训练的效果还没我的好 锐化太严重
+        params = torch.load(weight, map_location=device)
+        # model.load_state_dict(params['model'])
+        model.load_state_dict(params['weights'])
+        model.eval()
+        with torch.no_grad():
+            res = model(lr)
+            res=res.squeeze().numpy().transpose(1,2,0)
+            res=(res+1.)/2.
+            cv2.imwrite('./results/res_{}.png'.format(i),cv2.cvtColor(res*255,cv2.COLOR_RGB2BGR))

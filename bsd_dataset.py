@@ -12,6 +12,14 @@ import os
 from glob import glob
 import cv2
 from torchvision.transforms import functional
+from torch.utils.data.dataloader import default_collate
+
+def collate(batch):
+    if isinstance(batch, list):
+        batch = [(lr, hr) for (lr, hr) in batch if lr is not None]
+    if len(batch) == 0: return torch.Tensor()
+    return default_collate(batch)
+
 class BSD_DataSets(Dataset):
     def __init__(self,path,train_or_val='train',scale_factor=4):
         self.image_paths=glob(os.path.join(path,train_or_val,'*.jpg'))
@@ -26,8 +34,10 @@ class BSD_DataSets(Dataset):
         image=cv2.imread(self.image_paths[item])
         image=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
         # c,h,w
+        h, w, c = image.shape
+        if h<96 or w<96:
+            return None,None
         if self.train_or_val=='val':
-            h, w,c = image.shape
             self.hscale = h // self.scale_factor
             self.wscale = w // self.scale_factor
         else:
