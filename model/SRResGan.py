@@ -33,7 +33,8 @@ class Discriminator(nn.Module):
         out3=self.fc1(out2)
         out4=self.ac(out3)
         out5=self.fc2(out4)
-        return out5
+        out6=self.sigmod(out5)
+        return out6
 
 class Block(nn.Module):
     def __init__(self,in_channels,hidden=64,kernel_size=3,stride=2,use_bn=True,padding=1):

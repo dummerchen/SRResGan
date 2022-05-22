@@ -52,7 +52,7 @@ def main(opts):
     truncated_vgg19.eval()
 
     mse_loss_func=torch.nn.MSELoss()
-    bce_loss_func=torch.nn.BCEWithLogitsLoss()
+    bce_loss_func=torch.nn.BCELoss()
 
     g_optimizer=torch.optim.Adam(lr=opts.learning_rate,params=g.parameters(),betas=(0.9,0.99))
     d_optimizer=torch.optim.Adam(lr=opts.learning_rate,params=d.parameters(),betas=(0.9,0.99))
@@ -90,7 +90,7 @@ def main(opts):
         for lr,hr in train_bar:
         # ----- Generator -------
 
-            lr,hr=lr.to(device,non_block=True),hr.to(device)
+            lr,hr=lr.to(device),hr.to(device)
             res=g(lr)
             vgg_hr=truncated_vgg19(hr)
             vgg_res=truncated_vgg19(res)

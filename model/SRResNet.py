@@ -37,6 +37,7 @@ class SRResNet(nn.Module):
         out4=out1+out3
         out5=self.pixel_shuffle(out4) # B,64,w*4,h*4
         out6=self.conv3(out5) # B,3,w*4,h*4
+
         return out6
 
 class Block(nn.Module):

@@ -48,7 +48,6 @@ class BSD_DataSets(Dataset):
             'train': transforms.Compose([
                 transforms.ToPILImage(),
                 transforms.RandomCrop(size=96),
-                transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
             ]),
             'lr': transforms.Compose([
