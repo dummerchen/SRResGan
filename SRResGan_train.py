@@ -11,7 +11,7 @@ import argparse
 from tqdm import tqdm
 from model.SRResNet import SRResNet as G
 from model.SRResGan import TruncatedVGG19,Discriminator as D
-from bsd_dataset import BSD_DataSets,collate
+from bsd_dataset import BSD_DataSets,collate,Logger
 from torch.utils.data import DataLoader
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 import torch.backends.cudnn as cudnn
@@ -29,7 +29,8 @@ def main(opts):
     torch.manual_seed(opts.seed)
 
     writer=tensorboard.SummaryWriter(log_dir=os.path.join(opts.logs_dir,'Gan_'+time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(time.time()))))
-
+    train_logger=Logger('./logs/train_log.txt')
+    val_logger=Logger('./logs/val_log.txt')
     if opts.workers is None:
         workers=min([os.cpu_count(), opts.batchsize if opts.batchsize > 1 else 0, 8])
     else:
@@ -131,7 +132,7 @@ def main(opts):
         writer.add_scalar('train_content_loss',train_mean_pertual_loss,epoch)
         writer.add_scalar('train_psnr',train_mean_psnr,epoch)
         writer.add_scalar('train_d_loss',train_mean_d_loss,epoch)
-        print('\n train_content_loss:{} train_d_loss:{} train_psnr:{}\n'.format(train_mean_pertual_loss,train_mean_d_loss,train_mean_psnr))
+        train_logger.info('Epoch:[{}/{}]train_loss:{} train_d_loss:{} train_psnr:{}\n'.format(epoch,opts.epoch,train_mean_pertual_loss,train_mean_d_loss,train_mean_psnr))
         if epoch%opts.save_epoch==0:
             g.eval()
             val_bar=tqdm(val_dataloader)
@@ -158,7 +159,7 @@ def main(opts):
                 writer.add_scalar('val_mean_loss',val_mean_loss,epoch)
                 writer.add_scalar('val_mean_psnr',val_mean_psnr,epoch)
                 writer.add_scalar('val_mean_ssim',val_mean_ssim,epoch)
-                print('\n val_mean_loss:{} val_psnr:{} val_ssim:{}\n'.format(val_mean_loss, val_mean_psnr,val_mean_ssim))
+                val_logger.info('Epoch:[{}/{}] val_mean_loss:{} val_psnr:{} val_ssim:{}\n'.format(epoch,opts.epoch,val_mean_loss, val_mean_psnr,val_mean_ssim))
             g_state_dict={
                 'weights':g.state_dict(),
                 'd_weights':d.state_dict(),

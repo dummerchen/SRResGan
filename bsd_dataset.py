@@ -3,16 +3,14 @@
 # @Contact : https://github.com/dummerchen 
 # @Time : 2022/5/2 14:52
 import torch
-from glob import glob
-import torchvision
-from torch import nn
-from torch.utils.data import Dataset,DataLoader
+from torch.utils.data import Dataset
 from torchvision import transforms
 import os
 from glob import glob
 import cv2
 from torchvision.transforms import functional
 from torch.utils.data.dataloader import default_collate
+import logging
 
 def collate(batch):
     if isinstance(batch, list):
@@ -23,7 +21,7 @@ def collate(batch):
 
 class BSD_DataSets(Dataset):
     def __init__(self,path,train_or_val='train',scale_factor=4):
-        self.image_paths=glob(os.path.join(path,train_or_val,'*.jpg'))[:3]
+        self.image_paths=glob(os.path.join(path,train_or_val,'*.jpg'))
         self.train_or_val=train_or_val
         self.scale_factor=scale_factor
 
@@ -68,4 +66,32 @@ class BSD_DataSets(Dataset):
 
         return lr,hr
 
+
+class Logger():
+    def __init__(self,file_path,level=logging.INFO):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(level=level)
+
+        handler = logging.FileHandler(file_path)
+        handler.setLevel(level)
+        formatter = logging.Formatter('%(message)s')
+        handler.setFormatter(formatter)
+
+        console = logging.StreamHandler()
+        console.setLevel(logging.INFO)
+
+        self.logger.addHandler(handler)
+        self.logger.addHandler(console)
+
+    def info(self,info):
+        return self.logger.info(info)
+
+    def debug(self,info):
+        return self.logger.info(info)
+
+    def warning(self,info):
+        return self.logger.warning(info)
+
+    def error(self,info):
+        return self.logger.error(info)
 
