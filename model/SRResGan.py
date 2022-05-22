@@ -24,6 +24,7 @@ class Discriminator(nn.Module):
         self.ac=nn.LeakyReLU(0.2,inplace=True)
         self.fc2=nn.Linear(1024,1)
         self.sigmod=nn.Sigmoid()
+
     def forward(self,x):
         b,c,w,h=x.shape
         out1=self.conv1(x)
@@ -32,8 +33,7 @@ class Discriminator(nn.Module):
         out3=self.fc1(out2)
         out4=self.ac(out3)
         out5=self.fc2(out4)
-        out6=self.sigmod(out5)
-        return out6
+        return out5
 
 class Block(nn.Module):
     def __init__(self,in_channels,hidden=64,kernel_size=3,stride=2,use_bn=True,padding=1):
@@ -45,7 +45,7 @@ class Block(nn.Module):
 
     def forward(self,x):
         out1=self.conv(x)
-        if self.use_bn==True:
+        if self.use_bn:
             out=self.bn(out1)
         out=self.ac(out1)
         return out

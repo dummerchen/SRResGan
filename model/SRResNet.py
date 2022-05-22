@@ -3,9 +3,9 @@
 # @Contact : https://github.com/dummerchen 
 # @Time : 2022/5/2 14:40
 import math
-
 import torch
 from torch import nn
+
 class SRResNet(nn.Module):
     def __init__(self,in_channels,n_block,scale_factor,hidden_channels):
         super(SRResNet, self).__init__()
@@ -25,8 +25,9 @@ class SRResNet(nn.Module):
             if isinstance(m,nn.Conv2d):
                 n=m.kernel_size[0]*m.kernel_size[1]*m.out_channels
                 m.weight.data.normal_(0,math.sqrt(2./n))
-                if m.bias!=None:
+                if m.bias is not None:
                     m.bias.data.zero_()
+
     def forward(self,x):
         out1=self.conv1(x) # B,64,w,h
         out1=self.ac1(out1)

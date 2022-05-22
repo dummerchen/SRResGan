@@ -2,23 +2,25 @@
 # @Author : Dummerfu
 # @Contact : https://github.com/dummerchen 
 # @Time : 2022/5/4 12:48
+
+import builtins
+if 'builtins' not in dir() or not hasattr(builtins, 'profile'):
+    def profile(func):
+        def inner(*args, **kwargs):
+            return func(*args, **kwargs)
+        return inner
+    builtins.__dict__['profile'] = profile
 import cv2
 import torch
 from torchvision import transforms
-from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 import os
 from model.SRResNet import SRResNet
-from model.models import SRResNet as sr
-from PIL import Image
-import matplotlib as mpl
-from matplotlib import pyplot as plt
-
-mpl.rcParams['font.sans-serif'] = 'SimHei'
-mpl.rcParams['axes.unicode_minus'] = False
 
 if __name__ == '__main__':
+
+
     scale_factor=4
-    path='../datasets/bsds500/val/48025.jpg'
+    path='../datasets/bsds500/val/35049.jpg'
     image = cv2.imread(path)
     cv2.imwrite('./results/lr.png',image)
     h,w,c=image.shape

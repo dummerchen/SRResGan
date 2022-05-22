@@ -17,12 +17,13 @@ from torch.utils.data.dataloader import default_collate
 def collate(batch):
     if isinstance(batch, list):
         batch = [(lr, hr) for (lr, hr) in batch if lr is not None]
-    if len(batch) == 0: return torch.Tensor()
+    if len(batch) == 0:
+        return torch.Tensor()
     return default_collate(batch)
 
 class BSD_DataSets(Dataset):
     def __init__(self,path,train_or_val='train',scale_factor=4):
-        self.image_paths=glob(os.path.join(path,train_or_val,'*.jpg'))
+        self.image_paths=glob(os.path.join(path,train_or_val,'*.jpg'))[:3]
         self.train_or_val=train_or_val
         self.scale_factor=scale_factor
 
@@ -54,10 +55,6 @@ class BSD_DataSets(Dataset):
                 transforms.Resize(size=[self.hscale, self.wscale],interpolation=functional.InterpolationMode.BICUBIC),
                 transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ]),
-            'hr': transforms.Compose([
-                # -1~1
-                transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
-            ]),
             # 验证集尽可能取最大为高分辨率
             'val': transforms.Compose([
                 transforms.ToPILImage(),
@@ -67,7 +64,7 @@ class BSD_DataSets(Dataset):
         }
 
         image=self.transforms[self.train_or_val](image)
-        hr=self.transforms['hr'](image)
+        hr=image
         lr=self.transforms['lr'](image)
 
         return lr,hr

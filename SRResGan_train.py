@@ -30,7 +30,7 @@ def main(opts):
 
     writer=tensorboard.SummaryWriter(log_dir=os.path.join(opts.logs_dir,'Gan_'+time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(time.time()))))
 
-    if opts.workers==None:
+    if opts.workers is None:
         workers=min([os.cpu_count(), opts.batchsize if opts.batchsize > 1 else 0, 8])
     else:
         workers=opts.workers
@@ -56,10 +56,10 @@ def main(opts):
 
     g_optimizer=torch.optim.Adam(lr=opts.learning_rate,params=g.parameters(),betas=(0.9,0.99))
     d_optimizer=torch.optim.Adam(lr=opts.learning_rate,params=d.parameters(),betas=(0.9,0.99))
-    g_lr_schedule=torch.optim.lr_scheduler.StepLR(g_optimizer,step_size=60,gamma=0.3)
-    d_lr_schedule=torch.optim.lr_scheduler.StepLR(d_optimizer,step_size=60,gamma=0.3)
+    g_lr_schedule=torch.optim.lr_scheduler.StepLR(g_optimizer,step_size=100,gamma=0.1)
+    d_lr_schedule=torch.optim.lr_scheduler.StepLR(d_optimizer,step_size=100,gamma=0.1)
 
-    if  opts.gweights!=None and os.path.exists(opts.gweights):
+    if  opts.gweights is not None and os.path.exists(opts.gweights):
         # 加载模型
         params=torch.load(opts.gweights,map_location=device)
         g_optimizer.load_state_dict(params['optimizer'])
@@ -68,16 +68,16 @@ def main(opts):
         start_epoch=params['epoch']
         try:
             g_lr_schedule.load_state_dict(params['schedule'])
-        except:
+        except Exception:
             pass
-    if opts.dweights != None and os.path.exists(opts.dweights):
+    if opts.dweights is not None and os.path.exists(opts.dweights):
         params = torch.load(opts.dweights, map_location=device)
         d_optimizer.load_state_dict(params['optimizer'])
         d.load_state_dict(params['weights'])
         d_lr_schedule.load_state_dict(params['schedule'])
         try:
             d_lr_schedule.load_state_dict(params['schedule'])
-        except:
+        except Exception:
             pass
 
     for epoch in range(start_epoch+1,opts.epoch+1):
@@ -101,7 +101,7 @@ def main(opts):
             # 生成器与真实的接近程度
             ad_loss=bce_loss_func(pro,torch.ones_like(pro))
 
-            perceptual_loss=content_loss+1e-3*ad_loss
+            perceptual_loss=content_loss+0.001*ad_loss+0.006*mse_loss_func(hr,res)
             g_optimizer.zero_grad()
 
             perceptual_loss.backward()
@@ -121,7 +121,7 @@ def main(opts):
                 train_mean_psnr+=psnr
                 train_mean_d_loss+=d_loss.item()
                 train_mean_pertual_loss+=perceptual_loss.item()
-                train_bar.set_description(desc='Train Epoch[{}/{}] lr:{} content loss:{} d_loss:{} PSNR:{}'.format(epoch,opts.epoch,g_optimizer.param_groups[0]['lr'],perceptual_loss.item(),d_loss.item(),psnr))
+                train_bar.set_description(desc='Train Epoch[{}/{}] lr:{} loss:{} d_loss:{} PSNR:{}'.format(epoch,opts.epoch,g_optimizer.param_groups[0]['lr'],perceptual_loss.item(),d_loss.item(),psnr))
         g_lr_schedule.step()
         d_lr_schedule.step()
 
@@ -151,13 +151,7 @@ def main(opts):
                     val_mean_psnr +=psnr
                     val_mean_ssim +=ssim
                     val_bar.set_description(desc='Val Epoch:{} Loss:{} PSNR:{} SSIM:{}'.format(epoch,loss.item(),psnr,ssim))
-                    # 每次只输出最后一组的验证结果
-                    writer.add_images('SRResGan/epoch_' + str(epoch) + '_lr',
-                                      lr, epoch)
-                    writer.add_images('SRResGan/epoch_' + str(epoch) + '_res',
-                                      res, epoch)
-                    writer.add_images('SRResGan/epoch_' + str(epoch) + '_hr',
-                                      hr, epoch)
+
                 val_mean_loss/=len(val_bar)
                 val_mean_psnr/=len(val_bar)
                 val_mean_ssim/=len(val_bar)

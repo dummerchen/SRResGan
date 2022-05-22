@@ -29,7 +29,7 @@ def main(opts):
 
     writer=tensorboard.SummaryWriter(log_dir=os.path.join(opts.logs_dir,'Res_'+time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(time.time()))))
 
-    if opts.workers==None:
+    if opts.workers is None:
         workers=min([os.cpu_count(), opts.batchsize if opts.batchsize > 1 else 0, 8])
     else:
         workers=opts.workers
@@ -51,7 +51,7 @@ def main(opts):
     loss_func=torch.nn.MSELoss()
     optimizer=torch.optim.Adam(lr=opts.learning_rate,params=model.parameters(),betas=(0.9,0.99))
     lr_schedule=torch.optim.lr_scheduler.StepLR(optimizer,step_size=60,gamma=0.3)
-    if  opts.weights!=None and os.path.exists(opts.weights):
+    if  opts.weights is not None and os.path.exists(opts.weights):
         # 加载模型
         params=torch.load(opts.weights,map_location=device)
         optimizer.load_state_dict(params['optimizer'])
