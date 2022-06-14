@@ -3,7 +3,6 @@
 # @Contact : https://github.com/dummerchen 
 # @Time : 2022/5/2 14:40
 import time
-
 import torch
 from torch.utils import tensorboard
 import os
@@ -29,8 +28,8 @@ def main(opts):
     torch.manual_seed(opts.seed)
 
     writer=tensorboard.SummaryWriter(log_dir=os.path.join(opts.logs_dir,'Gan_'+time.strftime('%Y_%m_%d_%H_%M_%S',time.localtime(time.time()))))
-    train_logger=Logger('./logs/train_log.txt')
-    val_logger=Logger('./logs/val_log.txt')
+    train_logger=Logger('train','./logs/train_log.txt')
+    val_logger=Logger('val','./logs/val_log.txt')
     if opts.workers is None:
         workers=min([os.cpu_count(), opts.batchsize if opts.batchsize > 1 else 0, 8])
     else:
@@ -132,7 +131,7 @@ def main(opts):
         writer.add_scalar('train_content_loss',train_mean_pertual_loss,epoch)
         writer.add_scalar('train_psnr',train_mean_psnr,epoch)
         writer.add_scalar('train_d_loss',train_mean_d_loss,epoch)
-        train_logger.info('Epoch:[{}/{}]train_loss:{} train_d_loss:{} train_psnr:{}\n'.format(epoch,opts.epoch,train_mean_pertual_loss,train_mean_d_loss,train_mean_psnr))
+        train_logger.info('Epoch:[{}/{}] Loss:{} train_d_loss:{} PSNR:{}\n'.format(epoch,opts.epoch,train_mean_pertual_loss,train_mean_d_loss,train_mean_psnr))
         if epoch%opts.save_epoch==0:
             g.eval()
             val_bar=tqdm(val_dataloader)

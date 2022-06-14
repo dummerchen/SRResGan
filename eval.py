@@ -15,26 +15,30 @@ import torch
 from torchvision import transforms
 import os
 from model.SRResNet import SRResNet
-
+import time
 if __name__ == '__main__':
 
 
     scale_factor=4
-    path='../datasets/bsds500/val/35049.jpg'
-    image = cv2.imread(path)
-    cv2.imwrite('./results/lr.png',image)
-    h,w,c=image.shape
+    # path='../datasets/bsds500/val/238025.jpg'
+    path='./results/108036_1.jpg'
+    t=time.strftime("%Y-%m-%d-%H-%M-%S",time.localtime())
     if not os.path.exists('./results'):
         os.mkdir('./results')
+    if not os.path.exists('./results/{}'.format(t)):
+        os.mkdir('./results/{}'.format(t))
+
+    image = cv2.imread(path)
+    h,w,c=image.shape
+    cv2.imwrite('./results/{}/hr.png'.format(t), image)
     bimage=cv2.resize(image,(w*4,h*4),interpolation=3)
-    cv2.imwrite('./results/lr_b.png',bimage)
+    cv2.imwrite('./results/{}/lr_b.png'.format(t),bimage)
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     device='cpu'
 
     # 19.79 0.752
-    # weights_path='./weights/SRResNet_30.pth'
-    weights_path=['./weights/SRGan_g_66.pth','./weights/SRResNet_40.pth']
+    weights_path=['./weights/SRGan_sq_g_250.pth','./weights/SRResNet_sq_90.pth']
     # weights_path= 'weights/checkpoint_srresnet_21.pth'
     # c,h,w
     transform = {
@@ -66,4 +70,4 @@ if __name__ == '__main__':
             res = model(lr)
             res=res.squeeze().numpy().transpose(1,2,0)
             res=(res+1.)/2.
-            cv2.imwrite('./results/res_{}.png'.format(i),cv2.cvtColor(res*255,cv2.COLOR_RGB2BGR))
+            cv2.imwrite('./results/{}/res_{}.png'.format(t,i),cv2.cvtColor(res*255,cv2.COLOR_RGB2BGR))

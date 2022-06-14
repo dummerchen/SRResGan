@@ -21,7 +21,7 @@ def collate(batch):
 
 class BSD_DataSets(Dataset):
     def __init__(self,path,train_or_val='train',scale_factor=4):
-        self.image_paths=glob(os.path.join(path,train_or_val,'*.jpg'))
+        self.image_paths=glob(os.path.join(path,train_or_val,'*.jpg'))[:4]
         self.train_or_val=train_or_val
         self.scale_factor=scale_factor
 
@@ -68,8 +68,8 @@ class BSD_DataSets(Dataset):
 
 
 class Logger():
-    def __init__(self,file_path,level=logging.INFO):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self,file_name,file_path,level=logging.INFO):
+        self.logger = logging.getLogger(file_name)
         self.logger.setLevel(level=level)
 
         handler = logging.FileHandler(file_path)
